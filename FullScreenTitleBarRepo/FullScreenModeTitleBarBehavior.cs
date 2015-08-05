@@ -43,11 +43,8 @@ namespace FullScreenTitleBarRepo
             // Refill the content with our new title bar control.
             _mainPage.Content = _customTitleBar;
 
-            // Coloring.
-            _nativeTitleBar.ButtonBackgroundColor = this.Background.Color;
-            _customTitleBar.Background = this.Background;
-            _nativeTitleBar.ButtonForegroundColor = this.Foreground.Color;
-            _customTitleBar.Foreground = this.Foreground;
+            UpdateBackground(this.Background);
+            UpdateForeground(this.Foreground);
         }
 
         public void Detach()
@@ -68,9 +65,7 @@ namespace FullScreenTitleBarRepo
 
         private static void OnBackgroundChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var brush = (SolidColorBrush)e.NewValue;
-            _customTitleBar.Background = brush;
-            _nativeTitleBar.ButtonBackgroundColor = brush.Color;
+            UpdateBackground((SolidColorBrush)e.NewValue);
         }
 
         public SolidColorBrush Foreground
@@ -84,11 +79,23 @@ namespace FullScreenTitleBarRepo
 
         private static void OnForegroundChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var brush = (SolidColorBrush)e.NewValue;
-            _customTitleBar.Foreground = brush;
-            _nativeTitleBar.ButtonForegroundColor = brush.Color;
+            UpdateForeground((SolidColorBrush)e.NewValue);
         }
 
         #endregion
+
+        private static void UpdateBackground(SolidColorBrush brush)
+        {
+            _nativeTitleBar.ButtonBackgroundColor = brush.Color;
+            _nativeTitleBar.ButtonInactiveBackgroundColor = new Color() { A = 0 };
+            _customTitleBar.Background = brush;
+        }
+
+        private static void UpdateForeground(SolidColorBrush brush)
+        {
+            _nativeTitleBar.ButtonForegroundColor = brush.Color;
+            _nativeTitleBar.ButtonInactiveBackgroundColor = new Color() { A = 0 };
+            _customTitleBar.Foreground = brush;
+        }
     }
 }
