@@ -7,16 +7,15 @@ using Windows.UI.Xaml.Controls;
 namespace FullScreenTitleBarRepo
 {
     /// <summary>
-    /// This class was heavily inspired by this GitHub sasmple -
+    /// This class was heavily inspired by this GitHub sample -
     /// https://github.com/Microsoft/Windows-universal-samples/tree/master/Samples/TitleBar
     /// </summary>
-    public sealed partial class FullScreenTitleBar : UserControl
+    public sealed partial class FullScreenModeTitleBar : UserControl
     {
-        CoreApplicationViewTitleBar _titleBar = CoreApplication.GetCurrentView().TitleBar;
-        UIElement _pageContent = null;
+        CoreApplicationViewTitleBar _coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
+        UIElement _mainPageContent = null;
 
-
-        public FullScreenTitleBar()
+        public FullScreenModeTitleBar()
         {
             this.InitializeComponent();
 
@@ -36,7 +35,7 @@ namespace FullScreenTitleBarRepo
         }
 
         public static readonly DependencyProperty CoreTitleBarHeightProperty =
-            DependencyProperty.Register("CoreTitleBarHeight", typeof(double), typeof(FullScreenTitleBar), new PropertyMetadata(0d));
+            DependencyProperty.Register("CoreTitleBarHeight", typeof(double), typeof(FullScreenModeTitleBar), new PropertyMetadata(0d));
 
         #endregion
 
@@ -49,17 +48,17 @@ namespace FullScreenTitleBarRepo
         }
 
         public static readonly DependencyProperty CoreTitleBarPaddingProperty =
-            DependencyProperty.Register("CoreTitleBarPadding", typeof(Thickness), typeof(FullScreenTitleBar), new PropertyMetadata(default(Thickness)));
+            DependencyProperty.Register("CoreTitleBarPadding", typeof(Thickness), typeof(FullScreenModeTitleBar), new PropertyMetadata(default(Thickness)));
 
         #endregion
 
         void OnLoaded(object sender, RoutedEventArgs e)
         {
             // When the app window moves to a different screen
-            _titleBar.LayoutMetricsChanged += OnTitleBarLayoutMetricsChanged;
+            _coreTitleBar.LayoutMetricsChanged += OnTitleBarLayoutMetricsChanged;
 
             // When in full screen mode, the title bar is collapsed by default.
-            _titleBar.IsVisibleChanged += OnTitleBarIsVisibleChanged;
+            _coreTitleBar.IsVisibleChanged += OnTitleBarIsVisibleChanged;
 
             // The SizeChanged event is raised when the view enters or exits full screen mode.
             Window.Current.SizeChanged += OnWindowSizeChanged;
@@ -72,8 +71,8 @@ namespace FullScreenTitleBarRepo
 
         void OnUnloaded(object sender, RoutedEventArgs e)
         {
-            _titleBar.LayoutMetricsChanged -= OnTitleBarLayoutMetricsChanged;
-            _titleBar.IsVisibleChanged -= OnTitleBarIsVisibleChanged;
+            _coreTitleBar.LayoutMetricsChanged -= OnTitleBarLayoutMetricsChanged;
+            _coreTitleBar.IsVisibleChanged -= OnTitleBarIsVisibleChanged;
             Window.Current.SizeChanged -= OnWindowSizeChanged;
         }
 
@@ -94,7 +93,7 @@ namespace FullScreenTitleBarRepo
 
         private void UpdateLayoutMetrics()
         {
-            this.CoreTitleBarHeight = _titleBar.Height;
+            this.CoreTitleBarHeight = _coreTitleBar.Height;
 
             // The SystemOverlayLeftInset and SystemOverlayRightInset values are
             // in terms of physical left and right. Therefore, we need to flip
@@ -103,16 +102,16 @@ namespace FullScreenTitleBarRepo
             {
                 this.CoreTitleBarPadding = new Thickness()
                 {
-                    Left = _titleBar.SystemOverlayLeftInset,
-                    Right = _titleBar.SystemOverlayRightInset
+                    Left = _coreTitleBar.SystemOverlayLeftInset,
+                    Right = _coreTitleBar.SystemOverlayRightInset
                 };
             }
             else
             {
                 this.CoreTitleBarPadding = new Thickness()
                 {
-                    Left = _titleBar.SystemOverlayRightInset,
-                    Right = _titleBar.SystemOverlayLeftInset
+                    Left = _coreTitleBar.SystemOverlayRightInset,
+                    Right = _coreTitleBar.SystemOverlayLeftInset
                 };
             }
         }
@@ -139,7 +138,7 @@ namespace FullScreenTitleBarRepo
             {
                 // In full screen mode, the title bar overlays the content.
                 // and might or might not be visible.
-                TitleBar.Visibility = _titleBar.IsVisible ? Windows.UI.Xaml.Visibility.Visible : Windows.UI.Xaml.Visibility.Collapsed;
+                TitleBar.Visibility = _coreTitleBar.IsVisible ? Windows.UI.Xaml.Visibility.Visible : Windows.UI.Xaml.Visibility.Collapsed;
                 Grid.SetRow(TitleBar, 1);
 
                 // As there's already a button for exiting full screen mode,
@@ -160,25 +159,30 @@ namespace FullScreenTitleBarRepo
 
         public UIElement SetPageContent(UIElement newContent)
         {
-            UIElement oldContent = _pageContent;
+            UIElement oldContent = _mainPageContent;
+
             if (oldContent != null)
             {
-                _pageContent = null;
+                _mainPageContent = null;
                 RootGrid.Children.Remove(oldContent);
             }
-            _pageContent = newContent;
+
+            _mainPageContent = newContent;
+
             if (newContent != null)
             {
                 RootGrid.Children.Add(newContent);
                 // The page content is row 1 in our grid. (See diagram above.)
-                Grid.SetRow((FrameworkElement)_pageContent, 1);
+                Grid.SetRow((FrameworkElement)_mainPageContent, 1);
             }
+
             return oldContent;
         }
 
         private void OnFullScreenModeToggleClick(object sender, RoutedEventArgs e)
         {
             var view = ApplicationView.GetForCurrentView();
+
             if (view.IsFullScreenMode)
             {
                 view.ExitFullScreenMode();

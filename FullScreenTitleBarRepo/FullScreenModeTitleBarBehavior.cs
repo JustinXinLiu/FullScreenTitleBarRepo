@@ -9,10 +9,10 @@ using Windows.UI.Xaml.Media;
 
 namespace FullScreenTitleBarRepo
 {
-    public class AddFullScreenModeButtonToTitleBarBehavior : DependencyObject, IBehavior
+    public class FullScreenModeTitleBarBehavior : DependencyObject, IBehavior
     {
-        static ApplicationViewTitleBar _coreTitleBar = ApplicationView.GetForCurrentView().TitleBar;
-        static FullScreenTitleBar _customTitleBar = new FullScreenTitleBar();
+        static ApplicationViewTitleBar _nativeTitleBar = ApplicationView.GetForCurrentView().TitleBar;
+        static FullScreenModeTitleBar _customTitleBar = new FullScreenModeTitleBar();
         Page _mainPage = null;
 
         public DependencyObject AssociatedObject { get; private set; }
@@ -26,29 +26,33 @@ namespace FullScreenTitleBarRepo
                 throw new ArgumentException("The Associated Object needs to inherit from Panel!");
             }
 
-            _mainPage.Loaded += OnMainPageLoad;
+            _mainPage.Loaded += OnMainPageLoaded;
         }
 
-        void OnMainPageLoad(object sender, RoutedEventArgs e)
+        void OnMainPageLoaded(object sender, RoutedEventArgs e)
         {
             CoreApplication.GetCurrentView().TitleBar.ExtendViewIntoTitleBar = true;
 
-            var mainContent = _mainPage.Content;
+            // Store the original main page content.
+            var mainPageContent = _mainPage.Content;
+            // Clear the content for now.
             _mainPage.Content = null;
 
-            _customTitleBar.SetPageContent(mainContent);
+            // Move the content of the main page to our title bar control.
+            _customTitleBar.SetPageContent(mainPageContent);
+            // Refill the content with our new title bar control.
             _mainPage.Content = _customTitleBar;
 
-            // Coloring
-            _coreTitleBar.ButtonBackgroundColor = this.Background.Color;
+            // Coloring.
+            _nativeTitleBar.ButtonBackgroundColor = this.Background.Color;
             _customTitleBar.Background = this.Background;
-            _coreTitleBar.ButtonForegroundColor = this.Foreground.Color;
+            _nativeTitleBar.ButtonForegroundColor = this.Foreground.Color;
             _customTitleBar.Foreground = this.Foreground;
         }
 
         public void Detach()
         {
-            _mainPage.Loaded -= OnMainPageLoad;
+            _mainPage.Loaded -= OnMainPageLoaded;
         }
 
         #region Brushes
@@ -60,13 +64,13 @@ namespace FullScreenTitleBarRepo
         }
 
         public static readonly DependencyProperty BackgroundProperty =
-            DependencyProperty.Register("Background", typeof(SolidColorBrush), typeof(AddFullScreenModeButtonToTitleBarBehavior), new PropertyMetadata(new SolidColorBrush(Colors.White), OnBackgroundChanged));
+            DependencyProperty.Register("Background", typeof(SolidColorBrush), typeof(FullScreenModeTitleBarBehavior), new PropertyMetadata(new SolidColorBrush(Colors.White), OnBackgroundChanged));
 
         private static void OnBackgroundChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var brush = (SolidColorBrush)e.NewValue;
             _customTitleBar.Background = brush;
-            _coreTitleBar.ButtonBackgroundColor = brush.Color;
+            _nativeTitleBar.ButtonBackgroundColor = brush.Color;
         }
 
         public SolidColorBrush Foreground
@@ -76,13 +80,13 @@ namespace FullScreenTitleBarRepo
         }
 
         public static readonly DependencyProperty ForegroundProperty =
-            DependencyProperty.Register("Foreground", typeof(SolidColorBrush), typeof(AddFullScreenModeButtonToTitleBarBehavior), new PropertyMetadata(new SolidColorBrush(Colors.Black), OnForegroundChanged));
+            DependencyProperty.Register("Foreground", typeof(SolidColorBrush), typeof(FullScreenModeTitleBarBehavior), new PropertyMetadata(new SolidColorBrush(Colors.Black), OnForegroundChanged));
 
         private static void OnForegroundChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var brush = (SolidColorBrush)e.NewValue;
             _customTitleBar.Foreground = brush;
-            _coreTitleBar.ButtonForegroundColor = brush.Color;
+            _nativeTitleBar.ButtonForegroundColor = brush.Color;
         }
 
         #endregion
